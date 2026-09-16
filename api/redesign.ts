@@ -1,4 +1,4 @@
-import { editRoomPhoto, readRedesignEnv } from '../server/openaiRedesign'
+import { editRoomPhoto, readRedesignEnv } from '../server/openaiRedesign.js'
 
 type VercelReq = {
   method?: string

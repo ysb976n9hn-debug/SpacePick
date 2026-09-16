@@ -1,4 +1,4 @@
-import { readRedesignEnv } from '../server/openaiRedesign'
+import { readRedesignEnv } from '../server/openaiRedesign.js'
 
 type VercelRes = {
   status: (code: number) => VercelRes
