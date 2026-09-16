@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   const apiKey = env.OPENAI_API_KEY?.trim() || undefined
 
   return {
+    base: './',
     plugins: [
       react(),
       redesignApiPlugin({
@@ -22,6 +23,7 @@ export default defineConfig(({ mode }) => {
     preview: {
       host: true,
       port: 4173,
+      allowedHosts: true,
     },
   }
 })
