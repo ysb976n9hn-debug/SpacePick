@@ -110,7 +110,8 @@ img {
 
 .phone {
   width: min(440px, 100%);
-  min-height: min(860px, calc(100dvh - 36px));
+  min-height: min(780px, calc(100dvh - 36px));
+  max-height: calc(100dvh - 24px);
   background: linear-gradient(180deg, rgba(255, 250, 244, 0.08), rgba(255, 250, 244, 0.03));
   border: 1px solid rgba(255, 244, 230, 0.12);
   border-radius: 36px;
@@ -444,29 +445,36 @@ textarea:focus {
   opacity: 0.8;
 }
 
+.swipe-screen {
+  min-height: 0;
+}
+
 .deck {
   position: relative;
-  flex: 1;
-  min-height: 380px;
-  display: grid;
-  place-items: center;
+  flex: 1 1 auto;
+  min-height: 220px;
+  max-height: 460px;
+  width: 100%;
 }
 
 .card-shadow,
 .swipe-card {
   position: absolute;
-  inset: 8px 6px auto;
-  height: min(520px, 58dvh);
+  top: 8px;
+  left: 6px;
+  right: 6px;
+  bottom: 8px;
+  height: auto;
   border-radius: var(--radius);
 }
 
 .card-shadow {
   background: rgba(255, 250, 244, 0.08);
-  transform: scale(0.94) translateY(18px);
+  transform: scale(0.94) translateY(14px);
 }
 
 .card-shadow.two {
-  transform: scale(0.97) translateY(10px);
+  transform: scale(0.97) translateY(8px);
   background: rgba(255, 250, 244, 0.12);
 }
 
@@ -476,6 +484,7 @@ textarea:focus {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
   user-select: none;
   cursor: grab;
+  z-index: 2;
 }
 
 .swipe-card:active {
@@ -561,6 +570,9 @@ textarea:focus {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+  position: relative;
+  z-index: 3;
+  flex-shrink: 0;
 }
 
 .original-peek {
@@ -757,12 +769,12 @@ textarea:focus {
   .phone {
     width: 100%;
     min-height: 100dvh;
+    max-height: none;
     border-radius: 0;
     border: 0;
   }
 
-  .card-shadow,
-  .swipe-card {
-    height: min(560px, 54dvh);
+  .deck {
+    max-height: none;
   }
 }
