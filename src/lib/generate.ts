@@ -9,6 +9,7 @@ export type GenerateRequest = {
   seed: number
   refineLevel: number
   preferredMode: GenerationMode
+  forceDemo?: boolean
 }
 
 export type GenerateResult = {
@@ -74,18 +75,24 @@ async function generateLive(req: GenerateRequest): Promise<GenerateResult> {
 }
 
 export async function generateLook(req: GenerateRequest): Promise<GenerateResult> {
-  if (req.preferredMode === 'live') {
-    try {
-      return await generateLive(req)
-    } catch (error) {
-      const demo = await generateDemoDesign(req)
-      return {
-        ...demo,
-        mode: 'demo',
-        fallbackReason: error instanceof Error ? error.message : 'Live generation failed.',
-      }
-    }
+  if (req.forceDemo) {
+    const demo = await generateDemoDesign(req)
+    return { ...demo, mode: 'demo' }
   }
+
+  const server = await fetchServerMode()
+  const wantLive = server.mode === 'live' || req.preferredMode === 'live'
+
+  if (server.mode === 'live') {
+    return await generateLive(req)
+  }
+
+  if (wantLive) {
+    throw new Error(
+      'No OPENAI_API_KEY on the server. Copy .env.example to .env, set OPENAI_API_KEY, then stop and rerun npm run dev. Header should read Live AI.',
+    )
+  }
+
   const demo = await generateDemoDesign(req)
   return { ...demo, mode: 'demo' }
 }

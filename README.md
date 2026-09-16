@@ -2,49 +2,46 @@
 
 Swipe-based interior redesigns — Tinder for rooms.
 
-**Open on iPhone now:** https://temporary-prompt-basalt-ekm5uyh.vercel.app
+**Real product = Live AI** (OpenAI Images **edits** of *your* photo). Without a key, SpacePick only runs a labeled **DEMO MOCKUP — not real AI**. That mockup is not the product.
 
-Upload a photo of your space, describe the glow-up in plain language, then swipe **right** to keep a look as the new baseline (and refine it) or **left** to discard it and generate a different take from the same room + brief. Save the ones you’d actually live in.
-
-**Real redesigns use OpenAI Images edits** (photoreal paint, flooring, and furniture on *that* photo). Without an API key, the app still lets you swipe a **labeled DEMO — not real AI** preview so the loop works; it will never pretend a canvas filter is a live generation.
-
-## Open on iPhone
-
-1. In Safari, open **https://temporary-prompt-basalt-ekm5uyh.vercel.app** (no login).
-2. Tap **Try a sample room** (or upload / take a photo).
-3. Pick a brief such as “Paint the walls orange, swap the flooring, and change the furniture.”
-4. Tap **Generate DEMO looks (not real AI)** — or **Generate live looks** if a key is set.
-5. Swipe left/right, toggle **Before**, tap **Save**.
-6. Tap the gold **DEMO · get Live AI** pill (or the banner) for exact `OPENAI_API_KEY` steps.
-
-This Vercel preview is anonymous and expires in about an hour unless someone [claims it](https://vercel.com/claim-deployment?code=40d1faee-0b63-4610-9f19-e1da0c5eff26). Backup while the preview server is up: https://expensive-classical-music-trigger.trycloudflare.com
-
-If the header says **DEMO · get Live AI**, you are seeing a labeled fallback — not photoreal AI. Add `OPENAI_API_KEY` on the host (or locally) and redeploy / restart for **Live AI**.
-
-## Run locally
+## Turn on Live AI
 
 ```bash
 npm install
 cp .env.example .env
-# paste OPENAI_API_KEY=sk-... into .env for Live AI
+# paste OPENAI_API_KEY=sk-... into .env (no quotes)
 npm run dev
 ```
 
-Open the URL Vite prints (default [http://localhost:5173](http://localhost:5173)). Restart `npm run dev` after changing `.env`.
+Open the URL Vite prints (default [http://localhost:5173](http://localhost:5173)).
+
+**Confirm it worked:** the header pill must say **Live AI**, not DEMO. If it still says DEMO, the server did not load the key — save `.env` in the project root and restart `npm run dev`.
+
+Then: **Try a sample room** → “Paint the walls orange…” → **Generate live looks**. You should get a photoreal edit of that photo (orange paint on the walls), not a tint.
+
+Optional check from the terminal:
 
 ```bash
-npm run build
-npm run preview
+OPENAI_API_KEY=sk-... npm run verify:live
 ```
+
+GPT Image models may require [organization verification](https://platform.openai.com/settings/organization/general) and billing.
+
+## Open on iPhone
+
+Use a deployed HTTPS preview (not localhost). The pull request description has the current public URL.
+
+1. Open that URL in Safari.
+2. Tap **Try a sample room**.
+3. Pick a brief such as “Paint the walls orange, swap the flooring, and change the furniture.”
+4. If the header says **Live AI**, tap **Generate live looks**. If it says **DEMO · get Live AI**, you are in the labeled mockup — add `OPENAI_API_KEY` on the host and redeploy.
 
 ## Live AI vs labeled demo
 
 | Mode | When | What you get |
 | --- | --- | --- |
-| **Live AI** | `OPENAI_API_KEY` is set on the Vite server or host | Photoreal image-to-image edits via OpenAI Images **edits** (`gpt-image-2` by default, then `gpt-image-1.5` / `gpt-image-1`). Same camera/layout; brief applied as a renovation. Card badge: **Live AI**. |
-| **Demo** | No key, or live call failed | Stronger canvas color/material preview with a large **DEMO — not real AI** stamp on the image and a **DEMO** pill on the card. If live failed, a toast explains why. Never unlabeled. |
-
-GPT Image models may require [OpenAI organization verification](https://platform.openai.com/settings/organization/general) and billing.
+| **Live AI** | `OPENAI_API_KEY` is set on the Vite server or host | Photoreal image-to-image edits via OpenAI Images **edits**. Default model `gpt-image-1.5`, then `gpt-image-1` / `gpt-image-2`. High input fidelity, JPEG output. Same camera/layout; brief applied as a renovation. Card badge: **Live AI**. Failed live calls show the error — they do not silently swap in a filter. |
+| **Demo** | No key | Canvas mockup with a top bar **DEMO MOCKUP — not real AI**, plus DEMO banners. Never unlabeled. |
 
 ## Environment
 
@@ -53,14 +50,16 @@ Copy `.env.example` to `.env` in the project root.
 | Variable | Required | Description |
 | --- | --- | --- |
 | `OPENAI_API_KEY` | For Live AI | Server-side only — not exposed to the browser. |
-| `OPENAI_IMAGE_MODEL` | No | Default `gpt-image-2`. |
+| `OPENAI_IMAGE_MODEL` | No | Default `gpt-image-1.5`. |
 | `OPENAI_IMAGE_QUALITY` | No | Default `high` (`low` / `medium` / `high`). Use `medium` to spend less. |
+
+Restart `npm run dev` after changing `.env`.
 
 ### Vercel
 
 1. Import the GitHub repo at [vercel.com/new/import](https://vercel.com/new/import).
 2. Project → **Settings → Environment Variables** → add `OPENAI_API_KEY` for Production and Preview.
-3. Redeploy. `/api/mode` and `/api/redesign` are serverless routes (`maxDuration` 60s). Hobby timeouts can fail slow image edits — then the app shows a **labeled DEMO** plus the error toast.
+3. Redeploy. `/api/mode` and `/api/redesign` are serverless routes (`maxDuration` 60s). Hobby timeouts can fail slow image edits — then the app shows the error and a **Use labeled DEMO instead** button.
 
 ### Netlify
 

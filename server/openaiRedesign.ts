@@ -19,6 +19,9 @@ export type RedesignSuccess = {
   model: string
 }
 
+export const DEFAULT_IMAGE_MODEL = 'gpt-image-1.5'
+export const FALLBACK_MODELS = ['gpt-image-1.5', 'gpt-image-1', 'gpt-image-2']
+
 function pickSize(aspect?: number): string {
   if (!aspect || Number.isNaN(aspect)) return '1024x1024'
   if (aspect > 1.25) return '1536x1024'
@@ -26,50 +29,83 @@ function pickSize(aspect?: number): string {
   return '1024x1024'
 }
 
+function briefInstructions(userBrief: string): string {
+  const text = userBrief.toLowerCase()
+  const parts: string[] = []
+  const wantsWalls = /wall|paint|painted/.test(text)
+  const wantsFloor = /floor|hardwood|oak|walnut|marble|tile|carpet|concrete/.test(text)
+  const wantsFurniture = /furniture|sofa|couch|chair|bed|table|replace the furniture|change (the |my )?furniture/.test(
+    text,
+  )
+  const orange = /orange|terracotta|rust|burnt/.test(text)
+
+  if (wantsWalls && orange) {
+    parts.push(
+      'WALLS: Repaint the painted wall surfaces a saturated orange / terracotta (clearly orange, eggshell sheen). Keep white/cream trim, crown molding, ceiling, window frames, and the outdoor view unchanged. Shadows and corners must still look like real paint, not a global color grade or Instagram filter.',
+    )
+  } else if (wantsWalls) {
+    parts.push(
+      'WALLS: Repaint the painted wall surfaces to the requested color with real paint sheen and correct edges. Do not tint the whole photograph.',
+    )
+  }
+
+  if (wantsFloor) {
+    parts.push(
+      'FLOOR: Replace the floor material to match the brief (new hardwood, tile, marble, etc.) with correct perspective, planks/grout, and baseboards. Do not only shift the existing floor hue.',
+    )
+  }
+
+  if (wantsFurniture) {
+    parts.push(
+      'FURNITURE: Remove the existing furniture and place new pieces that fit this room, with realistic scale, contact shadows, and lighting that matches the window.',
+    )
+  }
+
+  if (parts.length === 0) {
+    parts.push(`Apply this brief as a real renovation of the photographed room: ${userBrief.trim()}`)
+  }
+
+  return parts.join(' ')
+}
+
 export function buildRedesignPrompt(userBrief: string, intent: string, seed?: number): string {
   const brief = userBrief.trim()
-  const nonce = seed != null ? `Variation nonce ${seed}.` : ''
+  const nonce = seed != null ? `Variation ${seed}.` : ''
+  const changes = briefInstructions(brief)
+
+  const constraints =
+    'This is an image-to-image PHOTO EDIT of the uploaded room. Preserve camera angle, lens, crop, room geometry, windows, window views, doors, ceiling, trim, and daylight direction. Output a real photograph of THIS room after renovation. No illustration, no CGI overlay, no cartoon furniture, no text, no watermark, no people, no filter/LUT over the whole frame.'
 
   if (intent === 'refine') {
     return [
-      'Photoreal interior PHOTO EDIT of the uploaded image.',
-      'This photo is already a redesign of a real room. Keep going in the SAME design direction.',
-      'Preserve camera angle, architecture, windows, ceiling, and room proportions exactly.',
-      'Do not revert furniture or finishes back to the original pre-renovation room.',
-      'Polish materials, lighting, styling, and completeness so it looks like a finished magazine photograph of the same renovation.',
-      `Homeowner brief (still apply): ${brief}`,
+      constraints,
+      'The input is already a redesign. Keep the same design direction and push it further — do not revert to the original pre-renovation furniture or finishes.',
+      changes,
+      `Homeowner brief: ${brief}`,
       nonce,
-      'Output a real photograph: physically plausible materials, correct perspective, natural light. No illustration, CGI overlay, text, logos, watermarks, or people.',
     ].join(' ')
   }
 
   if (intent === 'alternate') {
     return [
-      'Photoreal interior PHOTO EDIT of the uploaded room photograph.',
-      'Keep the SAME camera, architecture, windows, doors, ceiling, and spatial layout.',
-      'Produce a DISTINCTLY DIFFERENT designer take on the brief: different furniture pieces and arrangement, different flooring product, and a different but still-correct wall color/finish interpretation.',
-      `You MUST actually replace: (1) wall paint/finish, (2) flooring, (3) furniture — whenever the brief asks for those. Do not only grade the colors.`,
+      constraints,
+      'Produce a DISTINCT second renovation of the same brief: different furniture pieces if furniture is requested, a different but still-correct wall-paint interpretation, different floor product if flooring is requested. Still a photograph of this same room.',
+      changes,
       `Homeowner brief: ${brief}`,
       nonce,
-      'The result must look like a real photo of this same room after a different renovation contractor finished the job. No illustration, filters, text, logos, watermarks, or people.',
     ].join(' ')
   }
 
   return [
-    'Photoreal interior PHOTO EDIT of the uploaded room photograph — not a new scene, not a color filter.',
-    'HARD CONSTRAINTS — preserve exactly: camera angle, lens/viewpoint, crop, room geometry, windows, window views, doors, ceiling, trim, and daylight direction.',
-    'APPLY the homeowner brief as a real renovation of THIS room:',
-    `- If they mention walls/paint: repaint the wall surfaces the requested color with real paint sheen and correct corners/edges.`,
-    `- If they mention flooring: replace the floor material (new hardwood, tile, etc.) with correct perspective, grout/planks, and baseboards.`,
-    `- If they mention furniture: REMOVE the existing furniture and place new pieces that fit the room, with realistic scale, contact shadows, and matching lighting.`,
-    'Finish the room (rug, lighting, art) only as needed so it looks lived-in and complete.',
+    constraints,
+    'Execute the brief as a contractor would, not as a colorist. If the brief mentions orange walls, the walls must obviously be orange paint.',
+    changes,
     `Homeowner brief: ${brief}`,
     nonce,
-    'Output must be a believable photograph of the renovated room. No cartoon, no overlay graphics, no CGI furniture pasted on, no text, no watermark, no people.',
   ].join(' ')
 }
 
-function dataUrlToBlob(imageDataUrl: string): { blob: Blob; filename: string } {
+function dataUrlToFile(imageDataUrl: string): File {
   const comma = imageDataUrl.indexOf(',')
   if (comma < 0) throw new Error('Invalid image data URL.')
   const header = imageDataUrl.slice(0, comma)
@@ -77,31 +113,20 @@ function dataUrlToBlob(imageDataUrl: string): { blob: Blob; filename: string } {
   const mime = header.match(/data:(.*?);/)?.[1] || 'image/jpeg'
   const ext = mime.includes('png') ? 'png' : mime.includes('webp') ? 'webp' : 'jpg'
   const bytes = Buffer.from(b64, 'base64')
-  return { blob: new Blob([new Uint8Array(bytes)], { type: mime }), filename: `room.${ext}` }
+  return new File([new Uint8Array(bytes)], `room.${ext}`, { type: mime })
 }
 
-function usesInputFidelity(model: string): boolean {
-  return model.startsWith('gpt-image-1') && !model.includes('gpt-image-2')
-}
-
-function isUnknownModelError(message: string): boolean {
-  const m = message.toLowerCase()
-  return (
-    m.includes('invalid value') ||
-    m.includes('invalid model') ||
-    m.includes('does not exist') ||
-    m.includes('unknown model') ||
-    m.includes('not found') ||
-    (m.includes('model') && m.includes('invalid'))
-  )
+function supportsInputFidelity(model: string): boolean {
+  if (model.includes('mini')) return false
+  return model.startsWith('gpt-image-')
 }
 
 export function friendlyOpenAIError(status: number, message: string): string {
   const m = message.toLowerCase()
-  if (status === 401) return 'OpenAI rejected the API key. Check OPENAI_API_KEY.'
-  if (status === 429) return 'OpenAI rate limit or quota hit. Wait a moment or check billing at platform.openai.com.'
-  if (m.includes('verify') || m.includes('organization') || m.includes('not allowed')) {
-    return 'This OpenAI organization may need image-generation verification: https://platform.openai.com/settings/organization/general'
+  if (status === 401) return 'OpenAI rejected the API key. Check OPENAI_API_KEY in .env (then restart npm run dev).'
+  if (status === 429) return 'OpenAI rate limit or quota hit. Check billing at platform.openai.com.'
+  if (m.includes('verify') || m.includes('organization') || (m.includes('not allowed') && m.includes('image'))) {
+    return 'This OpenAI organization may need GPT Image verification: https://platform.openai.com/settings/organization/general'
   }
   if (status === 400 && m.includes('safety')) {
     return 'OpenAI blocked this image or prompt. Try a different room photo or a simpler brief.'
@@ -109,21 +134,53 @@ export function friendlyOpenAIError(status: number, message: string): string {
   return message || `OpenAI image edit failed (${status}).`
 }
 
+function isUnknownModelError(message: string): boolean {
+  const m = message.toLowerCase()
+  return (
+    m.includes('invalid model') ||
+    m.includes('does not exist') ||
+    m.includes('unknown model') ||
+    m.includes('not found') ||
+    (m.includes('invalid value') && m.includes('model'))
+  )
+}
+
+function isRetryableParamError(message: string): boolean {
+  const m = message.toLowerCase()
+  return (
+    m.includes('unknown parameter') ||
+    m.includes('unsupported') ||
+    m.includes('invalid value') ||
+    m.includes('input_fidelity') ||
+    m.includes('output_format') ||
+    m.includes('output_compression') ||
+    m.includes('quality')
+  )
+}
+
+type EditOptions = {
+  quality: string
+  size: string
+  outputFormat: 'jpeg' | 'png'
+  inputFidelity: boolean
+}
+
 async function postEdit(
   apiKey: string,
   model: string,
-  quality: string,
   req: RedesignRequest,
+  opts: EditOptions,
 ): Promise<RedesignSuccess> {
-  const { blob, filename } = dataUrlToBlob(req.imageDataUrl)
+  const file = dataUrlToFile(req.imageDataUrl)
   const form = new FormData()
   form.append('model', model)
   form.append('prompt', buildRedesignPrompt(req.prompt, req.intent || 'initial', req.seed))
-  form.append('image', blob, filename)
-  form.append('quality', quality)
-  form.append('size', pickSize(req.aspect))
-  form.append('output_format', 'png')
-  if (usesInputFidelity(model)) {
+  form.append('image', file, file.name)
+  form.append('size', opts.size)
+  form.append('quality', opts.quality)
+  form.append('output_format', opts.outputFormat)
+  if (opts.outputFormat === 'jpeg') form.append('output_compression', '90')
+  if (opts.inputFidelity && supportsInputFidelity(model)) {
     form.append('input_fidelity', 'high')
   }
 
@@ -142,25 +199,62 @@ async function postEdit(
     } catch {
       if (raw) message = raw.slice(0, 400)
     }
-    const error = new Error(friendlyOpenAIError(response.status, message))
-    ;(error as Error & { unknownModel?: boolean }).unknownModel = isUnknownModelError(message)
+    const error = new Error(friendlyOpenAIError(response.status, message)) as Error & {
+      unknownModel?: boolean
+      retryableParam?: boolean
+      rawMessage?: string
+    }
+    error.unknownModel = isUnknownModelError(message)
+    error.retryableParam = isRetryableParamError(message)
+    error.rawMessage = message
     throw error
   }
 
   const json = JSON.parse(raw) as { data?: Array<{ b64_json?: string; url?: string }> }
   const piece = json.data?.[0]
+  const mime = opts.outputFormat === 'jpeg' ? 'image/jpeg' : 'image/png'
   if (piece?.b64_json) {
-    return { dataUrl: `data:image/png;base64,${piece.b64_json}`, model }
+    return { dataUrl: `data:${mime};base64,${piece.b64_json}`, model }
   }
   if (piece?.url) {
     const imgRes = await fetch(piece.url)
     const buf = Buffer.from(await imgRes.arrayBuffer())
-    return { dataUrl: `data:image/png;base64,${buf.toString('base64')}`, model }
+    return { dataUrl: `data:${mime};base64,${buf.toString('base64')}`, model }
   }
   throw new Error('OpenAI returned no image data.')
 }
 
-const FALLBACK_MODELS = ['gpt-image-2', 'gpt-image-1.5', 'gpt-image-1']
+async function postEditWithRetries(
+  apiKey: string,
+  model: string,
+  quality: string,
+  req: RedesignRequest,
+): Promise<RedesignSuccess> {
+  const size = pickSize(req.aspect)
+  const attempts: EditOptions[] = [
+    { quality, size, outputFormat: 'jpeg', inputFidelity: true },
+    { quality, size, outputFormat: 'jpeg', inputFidelity: false },
+    { quality: 'auto', size, outputFormat: 'jpeg', inputFidelity: true },
+    { quality, size, outputFormat: 'png', inputFidelity: true },
+  ]
+
+  let lastError: Error | null = null
+  const seen = new Set<string>()
+  for (const opts of attempts) {
+    const key = JSON.stringify(opts)
+    if (seen.has(key)) continue
+    seen.add(key)
+    try {
+      return await postEdit(apiKey, model, req, opts)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      const extra = lastError as Error & { unknownModel?: boolean; retryableParam?: boolean }
+      if (extra.unknownModel) throw lastError
+      if (!extra.retryableParam) throw lastError
+    }
+  }
+  throw lastError ?? new Error('OpenAI image edit failed.')
+}
 
 export async function editRoomPhoto(config: RedesignConfig, req: RedesignRequest): Promise<RedesignSuccess> {
   if (!req.imageDataUrl || !req.prompt?.trim()) {
@@ -169,7 +263,7 @@ export async function editRoomPhoto(config: RedesignConfig, req: RedesignRequest
 
   const tried = new Set<string>()
   const queue = [config.model, ...FALLBACK_MODELS].filter((m) => {
-    if (tried.has(m)) return false
+    if (!m || tried.has(m)) return false
     tried.add(m)
     return true
   })
@@ -177,7 +271,7 @@ export async function editRoomPhoto(config: RedesignConfig, req: RedesignRequest
   let lastError: Error | null = null
   for (const model of queue) {
     try {
-      return await postEdit(config.apiKey, model, config.quality, req)
+      return await postEditWithRetries(config.apiKey, model, config.quality, req)
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error))
       const unknown = Boolean((lastError as Error & { unknownModel?: boolean }).unknownModel)
@@ -194,7 +288,7 @@ export function readRedesignEnv(env: Record<string, string | undefined> = proces
 } {
   return {
     apiKey: env.OPENAI_API_KEY?.trim() || undefined,
-    model: env.OPENAI_IMAGE_MODEL?.trim() || 'gpt-image-2',
+    model: env.OPENAI_IMAGE_MODEL?.trim() || DEFAULT_IMAGE_MODEL,
     quality: env.OPENAI_IMAGE_QUALITY?.trim() || 'high',
   }
 }

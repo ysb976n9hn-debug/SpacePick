@@ -11,3 +11,4 @@ dist-ssr
 *.tsbuildinfo
 .netlify
 .vercel
+tmp-live-verify.jpg

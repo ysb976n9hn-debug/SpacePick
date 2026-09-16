@@ -13,9 +13,11 @@ export function PromptScreen({ sp }: { sp: SpacePickState }) {
       </div>
       <h2>What should we do to this room?</h2>
       <p className="hint">Natural language is perfect. Name colors, flooring, furniture, mood.</p>
-      {sp.mode !== 'live' && (
+      {sp.mode === 'live' ? (
+        <p className="live-banner">Live AI is on — OpenAI will photoreal-edit this photo. Header should read Live AI.</p>
+      ) : (
         <button className="demo-banner" onClick={() => sp.setScreen('setup')}>
-          DEMO mode — not real AI. Tap for exact OPENAI_API_KEY steps (local .env or Vercel).
+          DEMO mode — not real AI. Tap for exact OPENAI_API_KEY steps (copy .env.example → .env, restart).
         </button>
       )}
       <textarea

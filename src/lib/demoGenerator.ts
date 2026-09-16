@@ -34,25 +34,15 @@ function shade(c: RGB, f: number): RGB {
 }
 
 function stampDemoBadge(ctx: CanvasRenderingContext2D, w: number, h: number) {
-  const pad = Math.max(10, Math.round(w * 0.018))
-  const label = 'DEMO — not real AI'
+  const barH = Math.max(38, Math.round(h * 0.08))
   ctx.save()
-  ctx.font = `700 ${Math.max(13, Math.round(w * 0.028))}px Outfit, system-ui, sans-serif`
-  const tw = ctx.measureText(label).width
-  const bh = Math.max(28, Math.round(h * 0.046))
-  const bw = tw + pad * 2
-  const x = pad
-  const y = h - bh - pad
-  ctx.fillStyle = 'rgba(16, 8, 6, 0.9)'
-  ctx.beginPath()
-  ctx.roundRect(x, y, bw, bh, bh / 2)
-  ctx.fill()
-  ctx.strokeStyle = 'rgba(255, 210, 122, 0.85)'
-  ctx.lineWidth = 1.5
-  ctx.stroke()
+  ctx.fillStyle = 'rgba(16, 8, 6, 0.92)'
+  ctx.fillRect(0, 0, w, barH)
   ctx.fillStyle = '#FFD27A'
+  ctx.font = `800 ${Math.max(16, Math.round(w * 0.036))}px Outfit, system-ui, sans-serif`
+  ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillText(label, x + pad, y + bh / 2)
+  ctx.fillText('DEMO MOCKUP — not real AI', w / 2, barH / 2)
   ctx.restore()
 }
 
@@ -445,13 +435,17 @@ export async function generateDemoDesign(opts: {
   const wall = parseCssColor(wallCss)
   const floor = parseCssColor(brief.floorStyle === 'keep' ? '#b08968' : brief.floorColor)
   const horizon = h * (0.54 + rand() * 0.05)
-  const wallAmt = opts.intent === 'refine' ? Math.min(0.72, 0.5 + opts.refineLevel * 0.07) : 0.46 + rand() * 0.16
-  const floorAmt = brief.floorStyle === 'keep' ? 0.28 + rand() * 0.1 : 0.62 + rand() * 0.16
+  const wallAmt = opts.intent === 'refine' ? Math.min(0.82, 0.58 + opts.refineLevel * 0.07) : 0.58 + rand() * 0.14
+  const floorAmt = brief.floorStyle === 'keep' ? 0.12 + rand() * 0.08 : 0.62 + rand() * 0.16
   const variant = Math.floor(rand() * 8) + opts.refineLevel + (opts.intent === 'alternate' ? 3 : 0)
 
   paintWalls(ctx, w, h, wall, horizon, wallAmt)
-  drawFloorSurface(ctx, w, h, horizon, brief, floor, rand, floorAmt)
-  compositeFurniture(ctx, w, h, horizon, brief, rand, variant)
+  if (brief.floorStyle !== 'keep') {
+    drawFloorSurface(ctx, w, h, horizon, brief, floor, rand, floorAmt)
+  }
+  if (brief.keywords.includes('furniture')) {
+    compositeFurniture(ctx, w, h, horizon, brief, rand, variant)
+  }
   applyWindowLight(ctx, w, h, rand, brief.warmth < 0)
   stampDemoBadge(ctx, w, h)
 

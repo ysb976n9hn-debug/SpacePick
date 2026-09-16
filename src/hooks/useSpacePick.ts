@@ -57,20 +57,22 @@ export function useSpacePick() {
   }, [])
 
   const runGenerate = useCallback(
-    async (intent: GenerateIntent, source: string, nextRefine: number, seed: number) => {
+    async (intent: GenerateIntent, source: string, nextRefine: number, seed: number, forceDemo = false) => {
       if (generatingLock.current) return
       generatingLock.current = true
       lastJob.current = { intent, source, refine: nextRefine, seed }
       setGenerating(true)
       setError(null)
       try {
+        const preferredMode = forceDemo ? 'demo' : await refreshMode()
         const result = await generateLook({
           baselineDataUrl: source,
           prompt,
           intent,
           seed,
           refineLevel: nextRefine,
-          preferredMode: mode,
+          preferredMode,
+          forceDemo,
         })
         if (result.fallbackReason) {
           toast(`Live AI unavailable — labeled DEMO (not real AI). ${result.fallbackReason}`)
@@ -98,13 +100,19 @@ export function useSpacePick() {
         generatingLock.current = false
       }
     },
-    [burnCredit, mode, prompt, toast],
+    [burnCredit, prompt, refreshMode, toast],
   )
 
   const retryGenerate = useCallback(async () => {
     const job = lastJob.current
     if (!job) return
     await runGenerate(job.intent, job.source, job.refine, job.seed)
+  }, [runGenerate])
+
+  const useLabeledDemo = useCallback(async () => {
+    const job = lastJob.current
+    if (!job) return
+    await runGenerate(job.intent, job.source, job.refine, job.seed, true)
   }, [runGenerate])
 
   const setPhoto = useCallback(async (dataUrl: string) => {
@@ -225,6 +233,7 @@ export function useSpacePick() {
     resetRoom,
     startOverLooks,
     retryGenerate,
+    useLabeledDemo,
     refreshMode,
   }
 }

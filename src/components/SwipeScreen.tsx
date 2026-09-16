@@ -75,6 +75,9 @@ export function SwipeScreen({ sp }: { sp: SpacePickState }) {
               <button className="btn primary" onClick={() => void sp.retryGenerate()}>
                 Retry live AI
               </button>
+              <button className="btn ghost" onClick={() => void sp.useLabeledDemo()}>
+                Use labeled DEMO instead
+              </button>
               <button className="btn ghost" onClick={() => sp.setScreen('setup')}>
                 API key setup
               </button>

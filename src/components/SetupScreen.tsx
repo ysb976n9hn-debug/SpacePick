@@ -16,9 +16,9 @@ export function SetupScreen({ sp }: { sp: SpacePickState }) {
       <p className="eyebrow">Live AI vs labeled demo</p>
       <h2>Photoreal edits need an API key.</h2>
       <p className="lede">
-        On iPhone you can swipe the labeled <strong>DEMO — not real AI</strong> mockups right now. Photoreal paint, floors,
-        and furniture need <code>OPENAI_API_KEY</code> on the host (or in local <code>.env</code>). After the key is set
-        and the app is restarted or redeployed, this same URL switches to Live AI.
+        Canvas mockups are labeled <strong>DEMO MOCKUP — not real AI</strong> and are not the product. Photoreal paint,
+        floors, and furniture need <code>OPENAI_API_KEY</code>. After the key is set and the app is restarted, the header
+        pill must read <strong>Live AI</strong> — if it still says DEMO, the server did not pick up the key.
       </p>
 
       <ol className="setup-steps">
@@ -34,8 +34,9 @@ export function SetupScreen({ sp }: { sp: SpacePickState }) {
           .
         </li>
         <li>
-          <strong>Local:</strong> in the project folder, copy <code>.env.example</code> to <code>.env</code>, set
-          <code> OPENAI_API_KEY=sk-...</code>, then stop and rerun <code>npm run dev</code>.
+          <strong>Local:</strong> copy <code>.env.example</code> to <code>.env</code> in the project folder, set
+          <code> OPENAI_API_KEY=sk-...</code>, then stop and rerun <code>npm run dev</code>. Confirm the header says{' '}
+          <strong>Live AI</strong>.
         </li>
         <li>
           <strong>Vercel:</strong> Project → Settings → Environment Variables → add <code>OPENAI_API_KEY</code> for
@@ -49,8 +50,8 @@ export function SetupScreen({ sp }: { sp: SpacePickState }) {
       </ol>
 
       <p className="hint">
-        Optional: <code>OPENAI_IMAGE_MODEL=gpt-image-2</code> (default) and <code>OPENAI_IMAGE_QUALITY=high</code>{' '}
-        (default). Use <code>medium</code> to spend less.
+        Optional: <code>OPENAI_IMAGE_MODEL=gpt-image-1.5</code> (default; falls back to <code>gpt-image-1</code>) and{' '}
+        <code>OPENAI_IMAGE_QUALITY=high</code> (default). Use <code>medium</code> to spend less.
       </p>
 
       <button
