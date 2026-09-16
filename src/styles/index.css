@@ -139,7 +139,6 @@ img {
   padding: 8px 18px 22px;
   min-height: 0;
 }
-}
 
 .topbar {
   display: flex;
@@ -330,7 +329,6 @@ img {
   gap: 14px;
   flex: 1 1 0;
   min-height: 0;
-}
 }
 
 @keyframes rise {
