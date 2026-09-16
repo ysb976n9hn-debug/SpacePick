@@ -160,6 +160,33 @@ export function recipeLine(brief: ParsedBrief): string {
   return bits.join(' · ')
 }
 
+export function lookLabel(prompt: string, intent: string): string {
+  const brief = parseBrief(prompt)
+  const vibe =
+    brief.wallName === 'orange' || brief.wallName === 'terracotta'
+      ? 'Terracotta crush'
+      : brief.style === 'scandinavian'
+        ? 'Quiet Scandi'
+        : brief.style === 'industrial'
+          ? 'Loft mood'
+          : brief.style === 'boho'
+            ? 'Sunbaked boho'
+            : brief.style === 'japandi'
+              ? 'Japandi hush'
+              : brief.style === 'coastal'
+                ? 'Sea-air coastal'
+                : brief.style === 'minimalist'
+                  ? 'Soft minimal'
+                  : brief.style === 'maximalist'
+                    ? 'Maximalist mix'
+                    : brief.style === 'midcentury'
+                      ? 'Mid-century glow'
+                      : 'New look'
+  if (intent === 'refine') return `${vibe} · refined`
+  if (intent === 'alternate') return `${vibe} · another take`
+  return vibe
+}
+
 export const PROMPT_CHIPS = [
   'Paint the walls orange, swap the flooring, and change the furniture.',
   'Scandinavian refresh — pale oak floors, cream walls, low linen sofa.',

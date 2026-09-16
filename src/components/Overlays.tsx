@@ -13,7 +13,7 @@ export function PaywallSheet({ sp }: { sp: SpacePickState }) {
         <ul className="plan-list">
           <li>
             <strong>Free</strong>
-            <span>Demo redesigns, watermarked exports</span>
+            <span>Labeled demo previews, Live AI when a key is set</span>
           </li>
           <li>
             <strong>Pro</strong>

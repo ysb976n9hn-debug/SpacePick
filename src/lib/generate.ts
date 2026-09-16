@@ -1,4 +1,5 @@
 import { generateDemoDesign } from './demoGenerator'
+import { parseBrief, recipeLine, lookLabel } from './promptParser'
 import type { GenerateIntent, GenerationMode } from '../types'
 
 export type GenerateRequest = {
@@ -18,14 +19,17 @@ export type GenerateResult = {
   fallbackReason?: string
 }
 
-export async function fetchServerMode(): Promise<GenerationMode> {
+export async function fetchServerMode(): Promise<{ mode: GenerationMode; model: string | null }> {
   try {
     const res = await fetch('/api/mode')
-    if (!res.ok) return 'demo'
-    const json = (await res.json()) as { mode?: string }
-    return json.mode === 'live' ? 'live' : 'demo'
+    if (!res.ok) return { mode: 'demo', model: null }
+    const json = (await res.json()) as { mode?: string; model?: string | null }
+    return {
+      mode: json.mode === 'live' ? 'live' : 'demo',
+      model: json.model ?? null,
+    }
   } catch {
-    return 'demo'
+    return { mode: 'demo', model: null }
   }
 }
 
@@ -33,7 +37,7 @@ async function generateLive(req: GenerateRequest): Promise<GenerateResult> {
   const img = await new Promise<HTMLImageElement>((resolve, reject) => {
     const el = new Image()
     el.onload = () => resolve(el)
-    el.onerror = () => reject(new Error('Could not read baseline image.'))
+    el.onerror = () => reject(new Error('Could not read the room photo.'))
     el.src = req.baselineDataUrl
   })
 
@@ -45,16 +49,26 @@ async function generateLive(req: GenerateRequest): Promise<GenerateResult> {
       prompt: req.prompt,
       intent: req.intent,
       aspect: img.naturalWidth / img.naturalHeight,
+      seed: req.seed,
     }),
   })
-  const json = (await res.json()) as { image?: string; message?: string }
-  if (!res.ok || !json.image) {
-    throw new Error(json.message || 'Live generation failed.')
+
+  let json: { image?: string; message?: string; model?: string } = {}
+  try {
+    json = (await res.json()) as { image?: string; message?: string; model?: string }
+  } catch {
+    json = {}
   }
+
+  if (!res.ok || !json.image) {
+    throw new Error(json.message || 'Live generation failed. Check the API key, org verification, and billing.')
+  }
+
+  const brief = parseBrief(req.prompt)
   return {
     dataUrl: json.image,
-    label: req.intent === 'refine' ? 'Live refine' : req.intent === 'alternate' ? 'Live alternate' : 'Live redesign',
-    recipe: req.prompt.trim(),
+    label: lookLabel(req.prompt, req.intent),
+    recipe: recipeLine(brief),
     mode: 'live',
   }
 }
@@ -72,9 +86,19 @@ export async function generateLook(req: GenerateRequest): Promise<GenerateResult
       }
     }
   }
-  const started = Date.now()
   const demo = await generateDemoDesign(req)
-  const wait = 700 - (Date.now() - started)
-  if (wait > 0) await new Promise((r) => setTimeout(r, wait))
   return { ...demo, mode: 'demo' }
+}
+
+export async function loadSampleRoom(): Promise<string> {
+  const url = `${import.meta.env.BASE_URL}sample-room.jpg`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('Could not load the sample room photo.')
+  const blob = await res.blob()
+  return await new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(new Error('Could not read the sample room photo.'))
+    reader.readAsDataURL(blob)
+  })
 }

@@ -16,7 +16,7 @@ export async function fileToDataUrl(file: File): Promise<string> {
   })
 }
 
-export async function resizeImage(dataUrl: string, maxEdge = 1024): Promise<string> {
+export async function resizeImage(dataUrl: string, maxEdge = 1400): Promise<string> {
   const img = await loadImage(dataUrl)
   const scale = Math.min(1, maxEdge / Math.max(img.naturalWidth, img.naturalHeight))
   const w = Math.max(1, Math.round(img.naturalWidth * scale))
@@ -27,7 +27,7 @@ export async function resizeImage(dataUrl: string, maxEdge = 1024): Promise<stri
   const ctx = canvas.getContext('2d')
   if (!ctx) throw new Error('Canvas is not available.')
   ctx.drawImage(img, 0, 0, w, h)
-  const jpeg = canvas.toDataURL('image/jpeg', 0.9)
+  const jpeg = canvas.toDataURL('image/jpeg', 0.92)
   return jpeg.length < dataUrl.length || !dataUrl.startsWith('data:image/jpeg') ? jpeg : dataUrl
 }
 

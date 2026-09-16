@@ -3,6 +3,7 @@ import { UploadScreen } from './components/UploadScreen'
 import { PromptScreen } from './components/PromptScreen'
 import { SwipeScreen } from './components/SwipeScreen'
 import { GalleryScreen } from './components/GalleryScreen'
+import { SetupScreen } from './components/SetupScreen'
 import { PaywallSheet, Toasts } from './components/Overlays'
 import { useSpacePick } from './hooks/useSpacePick'
 
@@ -23,6 +24,7 @@ export default function App() {
           {sp.screen === 'prompt' && <PromptScreen sp={sp} />}
           {sp.screen === 'swipe' && <SwipeScreen sp={sp} />}
           {sp.screen === 'gallery' && <GalleryScreen sp={sp} />}
+          {sp.screen === 'setup' && <SetupScreen sp={sp} />}
         </main>
       </div>
       <PaywallSheet sp={sp} />

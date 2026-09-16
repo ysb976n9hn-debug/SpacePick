@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { createSampleRoom } from '../lib/demoGenerator'
-import { fetchServerMode, generateLook } from '../lib/generate'
+import { fetchServerMode, generateLook, loadSampleRoom } from '../lib/generate'
 import { downloadDataUrl, fileToDataUrl, resizeImage } from '../lib/imageUtils'
 import { randomSeed, uid } from '../lib/rng'
 import { loadPersisted, savePersisted } from '../lib/storage'
@@ -19,6 +18,7 @@ export function useSpacePick() {
   const [current, setCurrent] = useState<Design | null>(null)
   const [generating, setGenerating] = useState(false)
   const [mode, setMode] = useState<GenerationMode>('demo')
+  const [liveModel, setLiveModel] = useState<string | null>(null)
   const [credits, setCredits] = useState<CreditsState>(persisted.credits)
   const [saved, setSaved] = useState<SavedLook[]>(persisted.saved)
   const [history, setHistory] = useState<SwipeEvent[]>([])
@@ -27,10 +27,18 @@ export function useSpacePick() {
   const [paywallOpen, setPaywallOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const generatingLock = useRef(false)
+  const lastJob = useRef<{ intent: GenerateIntent; source: string; refine: number; seed: number } | null>(null)
+
+  const refreshMode = useCallback(async () => {
+    const info = await fetchServerMode()
+    setMode(info.mode)
+    setLiveModel(info.model)
+    return info.mode
+  }, [])
 
   useEffect(() => {
-    void fetchServerMode().then(setMode)
-  }, [])
+    void refreshMode()
+  }, [refreshMode])
 
   useEffect(() => {
     savePersisted({ prompt, credits, saved })
@@ -41,11 +49,10 @@ export function useSpacePick() {
     setToasts((t) => [...t, { id, text }])
     window.setTimeout(() => {
       setToasts((t) => t.filter((x) => x.id !== id))
-    }, 2800)
+    }, 3200)
   }, [])
 
   const burnCredit = useCallback(() => {
-    // Stub only — never blocks the MVP loop. Remaining count is a hook for packs/Pro later.
     setCredits((c) => ({ ...c, remaining: Math.max(0, c.remaining - CREDIT_COST) }))
   }, [])
 
@@ -53,6 +60,7 @@ export function useSpacePick() {
     async (intent: GenerateIntent, source: string, nextRefine: number, seed: number) => {
       if (generatingLock.current) return
       generatingLock.current = true
+      lastJob.current = { intent, source, refine: nextRefine, seed }
       setGenerating(true)
       setError(null)
       try {
@@ -65,7 +73,7 @@ export function useSpacePick() {
           preferredMode: mode,
         })
         if (result.fallbackReason) {
-          toast(`Live API unavailable — demo preview. ${result.fallbackReason}`)
+          toast(`Live AI unavailable — labeled DEMO preview. ${result.fallbackReason}`)
         }
         const design: Design = {
           id: uid('look'),
@@ -93,13 +101,20 @@ export function useSpacePick() {
     [burnCredit, mode, prompt, toast],
   )
 
+  const retryGenerate = useCallback(async () => {
+    const job = lastJob.current
+    if (!job) return
+    await runGenerate(job.intent, job.source, job.refine, job.seed)
+  }, [runGenerate])
+
   const setPhoto = useCallback(async (dataUrl: string) => {
-    const resized = await resizeImage(dataUrl, 1024)
+    const resized = await resizeImage(dataUrl, 1400)
     setOriginal(resized)
     setBaseline(resized)
     setCurrent(null)
     setHistory([])
     setShowOriginal(false)
+    setError(null)
     setScreen('prompt')
   }, [])
 
@@ -116,7 +131,7 @@ export function useSpacePick() {
   )
 
   const useSample = useCallback(async () => {
-    const url = await createSampleRoom()
+    const url = await loadSampleRoom()
     await setPhoto(url)
   }, [setPhoto])
 
@@ -173,6 +188,7 @@ export function useSpacePick() {
   const startOverLooks = useCallback(async () => {
     if (!original) return
     setBaseline(original)
+    setError(null)
     setScreen('swipe')
     await runGenerate('initial', original, 0, randomSeed())
   }, [original, runGenerate])
@@ -187,6 +203,7 @@ export function useSpacePick() {
     current,
     generating,
     mode,
+    liveModel,
     credits,
     saved,
     history,
@@ -204,6 +221,8 @@ export function useSpacePick() {
     saveLook,
     resetRoom,
     startOverLooks,
+    retryGenerate,
+    refreshMode,
   }
 }
 

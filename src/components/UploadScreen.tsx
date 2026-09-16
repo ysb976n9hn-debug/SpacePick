@@ -21,6 +21,11 @@ export function UploadScreen({ sp }: { sp: SpacePickState }) {
           totally different take.
         </p>
       </div>
+      {sp.mode !== 'live' && (
+        <button className="demo-banner" onClick={() => sp.setScreen('setup')}>
+          DEMO fallback is on — not real AI. Tap to add OPENAI_API_KEY for photoreal edits.
+        </button>
+      )}
 
       <label
         className={`dropzone ${dragging ? 'hot' : ''}`}

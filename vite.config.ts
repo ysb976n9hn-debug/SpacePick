@@ -12,8 +12,8 @@ export default defineConfig(({ mode }) => {
       react(),
       redesignApiPlugin({
         apiKey,
-        model: env.OPENAI_IMAGE_MODEL?.trim() || 'gpt-image-1',
-        quality: env.OPENAI_IMAGE_QUALITY?.trim() || 'medium',
+        model: env.OPENAI_IMAGE_MODEL?.trim() || 'gpt-image-2',
+        quality: env.OPENAI_IMAGE_QUALITY?.trim() || 'high',
       }),
     ],
     server: {

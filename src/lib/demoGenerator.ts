@@ -21,21 +21,26 @@ function roundedRect(
   ctx.closePath()
 }
 
-function fillGradient(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-  from: string,
-  to: string,
-  vertical = true,
-) {
-  const g = ctx.createLinearGradient(x, y, vertical ? x : x + w, vertical ? y + h : y)
-  g.addColorStop(0, from)
-  g.addColorStop(1, to)
-  ctx.fillStyle = g
-  ctx.fillRect(x, y, w, h)
+function stampDemoNotAi(ctx: CanvasRenderingContext2D, w: number, h: number) {
+  const bar = Math.max(52, Math.round(h * 0.1))
+  ctx.save()
+  ctx.fillStyle = 'rgba(16, 8, 6, 0.82)'
+  ctx.fillRect(0, 0, w, bar)
+  ctx.fillStyle = '#FFD27A'
+  ctx.font = `700 ${Math.max(20, Math.round(w * 0.048))}px Outfit, system-ui, sans-serif`
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillText('DEMO — not real AI', w / 2, bar / 2)
+  ctx.restore()
+
+  ctx.save()
+  ctx.translate(w * 0.5, h * 0.58)
+  ctx.rotate(-0.42)
+  ctx.font = `800 ${Math.max(48, Math.round(w * 0.14))}px Outfit, system-ui, sans-serif`
+  ctx.fillStyle = 'rgba(255, 90, 95, 0.2)'
+  ctx.textAlign = 'center'
+  ctx.fillText('DEMO', 0, 0)
+  ctx.restore()
 }
 
 function applyVignette(ctx: CanvasRenderingContext2D, w: number, h: number, strength: number) {
@@ -392,8 +397,8 @@ export async function generateDemoDesign(opts: {
 
   const intensity =
     opts.intent === 'refine'
-      ? Math.min(0.82, 0.4 + opts.refineLevel * 0.09)
-      : 0.42 + rand() * 0.14
+      ? Math.min(0.9, 0.55 + opts.refineLevel * 0.1)
+      : 0.58 + rand() * 0.14
 
   const wall =
     opts.intent === 'alternate' ? mixHex(brief.wallColor, brief.accentColor, 0.2 + rand() * 0.35) : brief.wallColor
@@ -408,10 +413,7 @@ export async function generateDemoDesign(opts: {
   if (octx) {
     drawFurnitureOverlay(octx, w, h, brief, rand, opts.intent)
     ctx.save()
-    ctx.globalAlpha = 0.26 + intensity * 0.22
-    ctx.globalCompositeOperation = 'overlay'
-    ctx.drawImage(overlay, 0, 0)
-    ctx.globalAlpha = 0.16 + intensity * 0.12
+    ctx.globalAlpha = 0.1 + intensity * 0.08
     ctx.globalCompositeOperation = 'soft-light'
     ctx.drawImage(overlay, 0, 0)
     ctx.restore()
@@ -421,113 +423,11 @@ export async function generateDemoDesign(opts: {
   applyGrain(ctx, w, h, rand, 16)
   applyVignette(ctx, w, h, 0.32)
 
-  // Tiny demo-mode mark — monetization hook for a future paid "no watermark" export.
-  ctx.save()
-  ctx.font = `${Math.max(12, Math.round(w * 0.028))}px Outfit, system-ui, sans-serif`
-  ctx.fillStyle = 'rgba(255,255,255,0.55)'
-  ctx.textAlign = 'right'
-  ctx.fillText('SpacePick · demo', w - 16, h - 16)
-  ctx.restore()
+  stampDemoNotAi(ctx, w, h)
 
   return {
     dataUrl: canvas.toDataURL('image/jpeg', 0.92),
     label: makeLabel(brief, opts.intent, opts.refineLevel),
     recipe: recipeLine(brief),
   }
-}
-
-/** Offline sample living room so the swipe loop is demoable with zero uploads. */
-export async function createSampleRoom(): Promise<string> {
-  const w = 900
-  const h = 1120
-  const canvas = document.createElement('canvas')
-  canvas.width = w
-  canvas.height = h
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Canvas is not available.')
-
-  fillGradient(ctx, 0, 0, w, h * 0.58, '#d9cfc2', '#cbbba8')
-  fillGradient(ctx, 0, h * 0.56, w, h * 0.44, '#b08968', '#6b4a32')
-
-  // Back wall / floor meeting
-  ctx.fillStyle = '#cfc3b3'
-  ctx.beginPath()
-  ctx.moveTo(0, 0)
-  ctx.lineTo(w, 0)
-  ctx.lineTo(w, h * 0.58)
-  ctx.lineTo(0, h * 0.62)
-  ctx.fill()
-
-  // Receding side wall
-  ctx.fillStyle = '#c0b3a3'
-  ctx.beginPath()
-  ctx.moveTo(0, 0)
-  ctx.lineTo(w * 0.18, 0)
-  ctx.lineTo(w * 0.18, h * 0.6)
-  ctx.lineTo(0, h * 0.72)
-  ctx.fill()
-
-  // Wood planks
-  ctx.strokeStyle = 'rgba(70, 40, 18, 0.28)'
-  ctx.lineWidth = 3
-  for (let i = 0; i < 16; i++) {
-    ctx.beginPath()
-    ctx.moveTo((w / 16) * i, h)
-    ctx.lineTo(w * 0.5, h * 0.54)
-    ctx.stroke()
-  }
-
-  drawWindow(ctx, w * 0.22, h * 0.12, w * 0.28, h * 0.28, false)
-  ctx.fillStyle = 'rgba(255, 236, 200, 0.35)'
-  ctx.beginPath()
-  ctx.moveTo(w * 0.22, h * 0.4)
-  ctx.lineTo(w * 0.5, h * 0.4)
-  ctx.lineTo(w * 0.62, h * 0.85)
-  ctx.lineTo(w * 0.08, h * 0.9)
-  ctx.fill()
-
-  // Rug
-  ctx.fillStyle = '#7a8aa0'
-  ctx.beginPath()
-  ctx.ellipse(w * 0.55, h * 0.84, w * 0.32, h * 0.07, 0, 0, Math.PI * 2)
-  ctx.fill()
-
-  // Sofa
-  ctx.fillStyle = '#6d7c8c'
-  roundedRect(ctx, w * 0.22, h * 0.55, w * 0.56, h * 0.2, 24)
-  ctx.fill()
-  ctx.fillStyle = '#5c6b7a'
-  roundedRect(ctx, w * 0.22, h * 0.55, w * 0.56, h * 0.07, 18)
-  ctx.fill()
-  ctx.fillStyle = '#c45c4a'
-  roundedRect(ctx, w * 0.28, h * 0.62, w * 0.12, h * 0.08, 10)
-  ctx.fill()
-
-  // Table
-  ctx.fillStyle = '#5c3a21'
-  roundedRect(ctx, w * 0.38, h * 0.78, w * 0.28, h * 0.04, 6)
-  ctx.fill()
-  ctx.fillStyle = '#eee8dc'
-  ctx.beginPath()
-  ctx.arc(w * 0.48, h * 0.775, 14, 0, Math.PI * 2)
-  ctx.fill()
-
-  drawPlant(ctx, w * 0.16, h * 0.74, 1.3, () => 0.4)
-  drawPlant(ctx, w * 0.86, h * 0.76, 1.1, () => 0.6)
-
-  // Frames
-  ctx.fillStyle = '#efe6d5'
-  ctx.strokeStyle = '#6b4a32'
-  ctx.lineWidth = 6
-  roundedRect(ctx, w * 0.58, h * 0.16, w * 0.16, h * 0.14, 4)
-  ctx.fill()
-  ctx.stroke()
-  roundedRect(ctx, w * 0.76, h * 0.2, w * 0.1, h * 0.12, 4)
-  ctx.fill()
-  ctx.stroke()
-
-  applyVignette(ctx, w, h, 0.28)
-  applyGrain(ctx, w, h, mulberry32(42), 12)
-
-  return canvas.toDataURL('image/jpeg', 0.92)
 }

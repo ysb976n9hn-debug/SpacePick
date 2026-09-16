@@ -13,6 +13,11 @@ export function PromptScreen({ sp }: { sp: SpacePickState }) {
       </div>
       <h2>What should we do to this room?</h2>
       <p className="hint">Natural language is perfect. Name colors, flooring, furniture, mood.</p>
+      {sp.mode !== 'live' && (
+        <button className="demo-banner" onClick={() => sp.setScreen('setup')}>
+          No API key — you’ll get a labeled DEMO, not a photoreal redesign. Tap to enable live AI.
+        </button>
+      )}
       <textarea
         value={sp.prompt}
         onChange={(e) => sp.setPrompt(e.target.value)}

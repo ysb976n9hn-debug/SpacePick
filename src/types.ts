@@ -1,4 +1,4 @@
-export type Screen = 'upload' | 'prompt' | 'swipe' | 'gallery'
+export type Screen = 'upload' | 'prompt' | 'swipe' | 'gallery' | 'setup'
 export type GenerationMode = 'demo' | 'live'
 export type GenerateIntent = 'initial' | 'refine' | 'alternate'
 export type SwipeDirection = 'like' | 'pass'
