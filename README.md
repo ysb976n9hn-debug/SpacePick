@@ -2,20 +2,24 @@
 
 Swipe-based interior redesigns — Tinder for rooms.
 
+**Open on iPhone now:** https://temporary-prompt-basalt-ekm5uyh.vercel.app
+
 Upload a photo of your space, describe the glow-up in plain language, then swipe **right** to keep a look as the new baseline (and refine it) or **left** to discard it and generate a different take from the same room + brief. Save the ones you’d actually live in.
 
 **Real redesigns use OpenAI Images edits** (photoreal paint, flooring, and furniture on *that* photo). Without an API key, the app still lets you swipe a **labeled DEMO — not real AI** preview so the loop works; it will never pretend a canvas filter is a live generation.
 
 ## Open on iPhone
 
-Use the deployed HTTPS preview (not localhost):
-
-1. Open the public URL from the pull request description on Safari.
-2. Tap **Try a sample room** (or upload a photo).
+1. In Safari, open **https://temporary-prompt-basalt-ekm5uyh.vercel.app** (no login).
+2. Tap **Try a sample room** (or upload / take a photo).
 3. Pick a brief such as “Paint the walls orange, swap the flooring, and change the furniture.”
-4. Swipe left/right, toggle **Before**, tap **Save**.
+4. Tap **Generate DEMO looks (not real AI)** — or **Generate live looks** if a key is set.
+5. Swipe left/right, toggle **Before**, tap **Save**.
+6. Tap the gold **DEMO · get Live AI** pill (or the banner) for exact `OPENAI_API_KEY` steps.
 
-If the header says **Demo**, you are seeing a labeled fallback — not photoreal AI. Add `OPENAI_API_KEY` on the host (or locally) and redeploy / restart for **Live AI**.
+This Vercel preview is anonymous and expires in about an hour unless someone [claims it](https://vercel.com/claim-deployment?code=40d1faee-0b63-4610-9f19-e1da0c5eff26). Backup while the preview server is up: https://expensive-classical-music-trigger.trycloudflare.com
+
+If the header says **DEMO · get Live AI**, you are seeing a labeled fallback — not photoreal AI. Add `OPENAI_API_KEY` on the host (or locally) and redeploy / restart for **Live AI**.
 
 ## Run locally
 
