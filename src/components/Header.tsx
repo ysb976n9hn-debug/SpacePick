@@ -22,11 +22,11 @@ export function Header({ sp }: { sp: SpacePickState }) {
       <div className="topbar-actions">
         <span
           className={`mode-pill ${sp.mode}`}
-          title={sp.mode === 'live' ? `OpenAI ${sp.liveModel ?? 'image'} edits` : 'Labeled demo fallback — tap for live AI setup'}
+          title={sp.mode === 'live' ? `OpenAI ${sp.liveModel ?? 'image'} edits` : 'DEMO — not real AI. Tap for OPENAI_API_KEY setup'}
           onClick={() => sp.setScreen('setup')}
           role="button"
         >
-          {sp.mode === 'live' ? 'Live AI' : 'Demo'}
+          {sp.mode === 'live' ? 'Live AI' : 'DEMO · get Live AI'}
         </span>
         <button className="credits-pill" onClick={() => sp.setPaywallOpen(true)} title="Credits are a stub for future packs / Pro">
           <span className="spark">✦</span>

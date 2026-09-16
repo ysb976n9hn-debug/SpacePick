@@ -16,9 +16,9 @@ export function SetupScreen({ sp }: { sp: SpacePickState }) {
       <p className="eyebrow">Live AI vs labeled demo</p>
       <h2>Photoreal edits need an API key.</h2>
       <p className="lede">
-        Canvas filters are not a redesign. Without <code>OPENAI_API_KEY</code>, SpacePick can still run a labeled{' '}
-        <strong>DEMO — not real AI</strong> preview so you can try swipe/save. Real flooring, paint, and furniture changes
-        require OpenAI image edits.
+        On iPhone you can swipe the labeled <strong>DEMO — not real AI</strong> mockups right now. Photoreal paint, floors,
+        and furniture need <code>OPENAI_API_KEY</code> on the host (or in local <code>.env</code>). After the key is set
+        and the app is restarted or redeployed, this same URL switches to Live AI.
       </p>
 
       <ol className="setup-steps">

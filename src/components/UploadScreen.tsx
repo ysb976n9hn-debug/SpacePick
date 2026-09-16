@@ -23,7 +23,7 @@ export function UploadScreen({ sp }: { sp: SpacePickState }) {
       </div>
       {sp.mode !== 'live' && (
         <button className="demo-banner" onClick={() => sp.setScreen('setup')}>
-          DEMO fallback is on — not real AI. Tap to add OPENAI_API_KEY for photoreal edits.
+          DEMO — not real AI. Tap for how to add OPENAI_API_KEY (local .env or Vercel) and get photoreal Live AI.
         </button>
       )}
 

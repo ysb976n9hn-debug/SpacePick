@@ -15,7 +15,7 @@ export function PromptScreen({ sp }: { sp: SpacePickState }) {
       <p className="hint">Natural language is perfect. Name colors, flooring, furniture, mood.</p>
       {sp.mode !== 'live' && (
         <button className="demo-banner" onClick={() => sp.setScreen('setup')}>
-          No API key — you’ll get a labeled DEMO, not a photoreal redesign. Tap to enable live AI.
+          DEMO mode — not real AI. Tap for exact OPENAI_API_KEY steps (local .env or Vercel).
         </button>
       )}
       <textarea
@@ -33,8 +33,13 @@ export function PromptScreen({ sp }: { sp: SpacePickState }) {
         ))}
       </div>
       <button className="btn primary full" disabled={!sp.prompt.trim()} onClick={() => void sp.startDesigning()}>
-        Generate looks
+        {sp.mode === 'live' ? 'Generate live looks' : 'Generate DEMO looks (not real AI)'}
       </button>
+      {sp.mode !== 'live' && (
+        <button className="text-link center-link" onClick={() => sp.setScreen('setup')}>
+          Add OPENAI_API_KEY for photoreal Live AI
+        </button>
+      )}
     </section>
   )
 }

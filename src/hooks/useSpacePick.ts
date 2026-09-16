@@ -73,7 +73,7 @@ export function useSpacePick() {
           preferredMode: mode,
         })
         if (result.fallbackReason) {
-          toast(`Live AI unavailable — labeled DEMO preview. ${result.fallbackReason}`)
+          toast(`Live AI unavailable — labeled DEMO (not real AI). ${result.fallbackReason}`)
         }
         const design: Design = {
           id: uid('look'),
@@ -149,15 +149,18 @@ export function useSpacePick() {
       if (!current || !baseline || generating) return
       setHistory((h) => [...h, { id: uid('swipe'), direction, designId: current.id, at: Date.now() }])
       if (direction === 'like') {
-        setBaseline(current.image)
-        toast('Kept — generating the next refine.')
-        await runGenerate('refine', current.image, current.refineLevel + 1, randomSeed())
+        // Live likes become the new photo. Demo composites must not stack on themselves.
+        const nextSource = current.mode === 'live' ? current.image : original ?? baseline
+        if (current.mode === 'live') setBaseline(current.image)
+        toast(current.mode === 'live' ? 'Kept — generating the next refine.' : 'Kept — another DEMO take from your photo.')
+        await runGenerate('refine', nextSource, current.refineLevel + 1, randomSeed())
       } else {
+        const passSource = current.mode === 'live' ? baseline : original ?? baseline
         toast('Passed — trying a different take.')
-        await runGenerate('alternate', baseline, current.refineLevel, randomSeed())
+        await runGenerate('alternate', passSource, current.refineLevel, randomSeed())
       }
     },
-    [baseline, current, generating, runGenerate, toast],
+    [baseline, current, generating, original, runGenerate, toast],
   )
 
   const saveCurrent = useCallback(() => {

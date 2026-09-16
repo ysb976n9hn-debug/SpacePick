@@ -27,6 +27,11 @@ export function SwipeScreen({ sp }: { sp: SpacePickState }) {
 
   return (
     <section className="screen swipe-screen">
+      {sp.mode !== 'live' && (
+        <button className="demo-banner compact" onClick={() => sp.setScreen('setup')}>
+          DEMO — not real AI. Tap to add OPENAI_API_KEY for Live AI.
+        </button>
+      )}
       <div className="swipe-meta">
         <p className="look-label">
           {busy ? 'Redesigning with AI…' : sp.error ? 'Generation failed' : sp.current?.label || 'Your look'}

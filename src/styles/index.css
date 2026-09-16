@@ -26,6 +26,8 @@ body,
 #root {
   margin: 0;
   min-height: 100%;
+  min-height: 100dvh;
+  min-height: -webkit-fill-available;
 }
 
 body {
@@ -33,6 +35,9 @@ body {
   color: var(--cream);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+  touch-action: manipulation;
 }
 
 button,
@@ -52,6 +57,7 @@ img {
 
 .app {
   min-height: 100dvh;
+  min-height: -webkit-fill-available;
   display: grid;
   place-items: center;
   padding: 18px 14px 28px;
@@ -121,6 +127,7 @@ img {
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .phone main {
@@ -137,6 +144,7 @@ img {
   justify-content: space-between;
   gap: 10px;
   padding: 16px 16px 8px;
+  padding-top: max(16px, env(safe-area-inset-top));
 }
 
 .brand {
@@ -219,6 +227,19 @@ img {
   padding: 10px 12px;
   font-size: 0.82rem;
   line-height: 1.35;
+}
+
+.demo-banner.compact {
+  padding: 8px 12px;
+  font-size: 0.78rem;
+  border-radius: 12px;
+}
+
+.center-link {
+  text-align: center;
+  display: block;
+  width: 100%;
+  padding: 4px 0 8px;
 }
 
 .setup-steps {
@@ -463,6 +484,7 @@ textarea {
   resize: vertical;
   min-height: 110px;
   line-height: 1.4;
+  font-size: 16px;
 }
 
 textarea:focus {
@@ -831,12 +853,103 @@ textarea:focus {
   .phone {
     width: 100%;
     min-height: 100dvh;
+    min-height: -webkit-fill-available;
     max-height: none;
     border-radius: 0;
     border: 0;
   }
 
+  .phone main {
+    padding: 4px 14px calc(10px + env(safe-area-inset-bottom));
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .deck {
     max-height: none;
+    min-height: 200px;
+  }
+
+  .hero-copy h1 {
+    font-size: 1.5rem;
+  }
+
+  .dropzone {
+    padding: 24px 16px;
+  }
+
+  .round.pass {
+    width: 58px;
+    height: 58px;
+  }
+
+  .round.like {
+    width: 66px;
+    height: 66px;
+  }
+
+  .round.save {
+    width: 52px;
+    height: 52px;
+  }
+
+  .brand-type em {
+    display: none;
+  }
+
+  .credits-pill {
+    display: none;
+  }
+
+  .mode-pill {
+    font-size: 0.68rem;
+    padding: 5px 8px;
+    max-width: 46vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .swipe-hint,
+  .fine-print {
+    display: none;
+  }
+
+  .compare-row {
+    gap: 8px;
+  }
+
+  .action-bar {
+    padding-bottom: 4px;
+  }
+
+  .toasts {
+    bottom: calc(12px + env(safe-area-inset-bottom));
+  }
+
+  .setup-screen {
+    padding-bottom: 8px;
+  }
+}
+
+@media (max-height: 720px) {
+  .hero-copy h1 {
+    font-size: 1.35rem;
+  }
+
+  .lede {
+    font-size: 0.9rem;
+  }
+
+  .prompt-preview {
+    max-height: 140px;
+  }
+
+  .prompt-preview img {
+    height: 140px;
+  }
+
+  .dropzone {
+    padding: 20px 14px;
   }
 }
